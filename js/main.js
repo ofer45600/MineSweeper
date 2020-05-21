@@ -8,13 +8,11 @@ var gLevel = {
     SIZE: 4,
     MINES: 2
 };
-gBoard = buildBoard();
-console.table(gBoard);
 
 function init() {
-
-    renderBoard(gboard);
+    gBoard = buildBoard();
     setMinesNegsCount()
+    renderBoard(gBoard);
 }
 
 function buildBoard() {
@@ -22,19 +20,18 @@ function buildBoard() {
     for (var i = 0; i < gLevel.SIZE; i++) {
         board[i] = [];
         for (var j = 0; j < gLevel.SIZE; j++) {
-            board[i][j] = { minesAroundCount: 4, isShown: false, isMine: false, isMarked: true, value: '' }
+            board[i][j] = { minesAroundCount: 0, isShown: false, isMine: false, isMarked: false }
 
         }
     }
-        board[0][3].isShown = board[3][0].isShown = true;
+    board[0][3].isShown = board[3][0].isShown = true;
     if (board[0][3].isShown && board[3][0].isShown) {
-        board[0][3].value = board[3][0].value = MINE;
+        board[0][3].isMine = true;
+        board[3][0].isMine = true;
     }
     return board;
 }
 
-renderBoard(gBoard)
-console.log(gBoard);
 
 function renderBoard(board) {
     var strHtml = '';
@@ -42,11 +39,19 @@ function renderBoard(board) {
         var row = board[i];
         strHtml += '<tr>';
         for (var j = 0; j < row.length; j++) {
-            var cell = board[i][j].value
+            var cell = board[i][j];
             var className = 'game-cell';
             var tdId = 'cell-' + i + '-' + j;
-            strHtml += '<td id="' + tdId + '" onclick="cellClicked(this)" ' +
-                'class=" ' + className + '">' + cell + '</td>';
+            if (cell.isShown) {
+
+                if (cell.isMine) {
+                    strHtml += '<td id="' + tdId + '" onclick="cellClicked(this)" ' +
+                        'class=" ' + className + '">' + MINE + '</td>';
+                }
+            } else {
+                strHtml += '<td id="' + tdId + '" onclick="cellClicked(this)" ' +
+                    'class=" ' + className + '">' + '' + '</td>';
+            }
         }
         strHtml += '</tr>';
     }
@@ -54,20 +59,34 @@ function renderBoard(board) {
     elMat.innerHTML = strHtml;
 }
 
-function setMinesNegsCount(cellI, cellJ, mat) {
+function getNegsCount(cellI, cellJ) {
     var negsCount = 0;
     for (var i = cellI - 1; i <= cellI + 1; i++) {
-        if (i < 0 || i >= mat.length) continue;
-        for (var j = cellJ - 1; j >= mat[i].length;) {
-            if (j < 0 || j > mat[i].length) continue;
+        if (i < 0 || i >= gBoard.length) continue;
+        for (var j = cellJ - 1; j <= cellJ + 1; j++) {
+            if (j < 0 || j >= gBoard[i].length) continue;
             if (i === cellI && j === cellJ) continue;
-            if (mat[i][j].value === MINE) {
+            if (gBoard[i][j].isMine) {
                 negsCount++;
-                mat[i][j].minesAroundCount++;
-
             }
 
         }
-        return negsCount;
     }
+    return negsCount;
+}
+
+
+function setMinesNegsCount() {
+    for (var i = 0; i < gBoard.length; i++) {
+        for (var j = 0; j < gBoard[i].length; j++) {
+            gBoard[i][j].minesAroundCount = getNegsCount(i, j);
+
+        }
+    }
+}
+
+function cellClicked(elTd) {
+    var elTd = document.querySelector(`#cell-${elTd.i}-${elTd.j}`);
+    console.log(elTd);
+
 }
